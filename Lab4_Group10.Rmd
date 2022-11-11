@@ -9,7 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r message=FALSE,warning=FALSE}
 library(datasets)
 library(tidyverse)
@@ -19,47 +18,49 @@ library(fields)
 ```{r}
 k_means <- function(data, k, iter){
   set.seed(111)
-  # Remove the label of data
-  data <- data[, -5]
   
-  # Randomly assigning each observation to a cluster
-  label <- sample(1:k, 150, replace = T)
+  data <- data %>% 
+    select(-Species) %>% # Remove the label of data
+    mutate(label = sample(1:k, 150, replace = T)) # Randomly assigning each observation to a cluster
   
-  for(t in iter){
+  centroids <- data %>% # Calculate the centroids for each of the cluster
+    group_by(label) %>% 
+    summarise(centr <- across(everything(),mean)) %>% 
+    select(-label)
+  
+  for(i in seq_len(iter)){
+    # Calculate the distance from each point to each of the centroids 
+     dist <- rdist(centroids, data[,-5])
+       
+    # Calculate the minimum distance for each point to the centroids
+     data <- data %>% 
+       mutate(label = apply(dist, 2, which.min))
     
-    # Calculate the centroids for each of the cluster
-    newcentr <- data.frame()
-
-    for(m in seq_len(k)){
-      idx <- data[label==m,]
-      newcentr<- rbind(newcentr, apply(idx, 2, mean))
-    }
-    
-    label <- c()
-    
-    for (i in seq_len(150)) {
-      dist <- c()
-      for(n in seq_len(k)){
-        # Calculate the distance from each point to each of the centroids
-        dist[n] <- rdist(data[i,], newcentr[n,])
-        # Calculate the minimum distance for each point to the centroids
-        label[i] <- which.min(dist)
-      }
-    }
-    
+    # Calculate the new centroids
+    centroids <- data %>% # Calculate the centroids for each of the cluster
+      group_by(label) %>% 
+      summarise(centr <- across(everything(),mean)) %>% 
+      select(-label)
   }
-  return(label)
+  return(data$label)
 }
-
-
 ```
-
 
 ```{r}
 label<- k_means(iris,3,50)
 table(label)
 ```
 
+```{r}
+iris <- iris %>% 
+  mutate(label = as.factor(label))
+
+ggplot(iris)+
+  geom_point(aes(x = Sepal.Length, y = Sepal.Width, color = Species))
+
+ggplot(iris)+
+  geom_point(aes(x = Sepal.Length, y = Sepal.Width, color = label))
+```
 
 
 
