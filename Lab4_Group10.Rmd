@@ -1,26 +1,29 @@
 ---
 title: "Lab4_Group10"
-author: "Jiayi Guo"
+author: "Jiayi Guo, Panyi Liu, Xiangning Dong"
 date: "2022-11-09"
 output: html_document
 ---
 
+## [Github Repository](https://github.com/AndrewGuo525/Lab4)
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## LoadPackage
 ```{r message=FALSE,warning=FALSE}
 library(datasets)
 library(tidyverse)
 library(fields)
+library(janitor)
 ```
 
+## Problem 1
 ```{r}
 k_means <- function(data, k, iter){
   set.seed(111)
   
   data <- data %>% 
-    select(-Species) %>% # Remove the label of data
     mutate(label = sample(1:k, 150, replace = T)) # Randomly assigning each observation to a cluster
   
   centroids <- data %>% # Calculate the centroids for each of the cluster
@@ -46,43 +49,46 @@ k_means <- function(data, k, iter){
 }
 ```
 
-```{r}
-label<- k_means(iris,3,50)
-table(label)
-```
-
-```{r}
-iris <- iris %>% 
-  mutate(label = as.factor(label))
-
-ggplot(iris)+
-  geom_point(aes(x = Sepal.Length, y = Sepal.Width, color = Species))
-
-ggplot(iris)+
-  geom_point(aes(x = Sepal.Length, y = Sepal.Width, color = label))
-```
-
+## Problem 2
 ```{r}
 set.seed(111)
-
-## Clean the names of the data set and remove species 
-iris_new <- iris %>% 
-  clean_names() %>%
-  select(- species) 
+library(datasets)
 ## Scale the data
-iris_scaled <- scale(iris_new) 
-## Try with 3 clusters and 50 iterations.
-iris_cluster <- k_means(iris_scaled, k = 3, iter = 50) 
-## Return the cluster
-iris_cluster
+iris_scaled <- iris %>% select(c(1:4))
+iris_scaled <- as.data.frame(scale(iris_scaled))
 
-iris_new <- iris_new %>%
-  mutate(cluster = as.factor(iris_cluster)) 
+cluster_iris <- k_means(iris_scaled, k = 3, iter = 50)
+iris_scaled <- iris_scaled %>%
+  mutate(cluster = cluster_iris)
+
 
 ## Visualization
-ggpairs(iris_new, 
-        aes(color = as.factor(cluster)))
-
-
+ggpairs(iris_scaled, columns = 1:4, ggplot2::aes(colour=as.factor(cluster), alpha=0.5))
 ```
+
+## Problem 3
+```{r}
+## Set a seed
+set.seed(111)  
+
+## Define function to calculate the total within-cluster sum of square
+wss <- function(k, data) {
+  kmeans(data, k, nstart = 50)$tot.withinss
+}
+
+## Get the total within-cluster sum of square for each k
+k <- 1:15  
+wSS <- map_dbl(k, wss, data = iris_scaled)
+wss_table <- data.frame(wss = wSS, k = k)
+
+## Plot the value corresponding to each k
+ggplot(wss_table, aes(x = k, y = wSS)) + 
+  geom_point() +  
+  geom_line() +
+  labs(x = "Cluster Size",
+       y = "Total Within-cluster Sum of Squares",
+       title = "Elbow Plot")
+```
+
+
 
