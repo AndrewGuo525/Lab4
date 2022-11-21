@@ -62,5 +62,27 @@ ggplot(iris)+
   geom_point(aes(x = Sepal.Length, y = Sepal.Width, color = label))
 ```
 
+```{r}
+set.seed(111)
 
+## Clean the names of the data set and remove species 
+iris_new <- iris %>% 
+  clean_names() %>%
+  select(- species) 
+## Scale the data
+iris_scaled <- scale(iris_new) 
+## Try with 3 clusters and 50 iterations.
+iris_cluster <- k_means(iris_scaled, k = 3, iter = 50) 
+## Return the cluster
+iris_cluster
+
+iris_new <- iris_new %>%
+  mutate(cluster = as.factor(iris_cluster)) 
+
+## Visualization
+ggpairs(iris_new, 
+        aes(color = as.factor(cluster)))
+
+
+```
 
