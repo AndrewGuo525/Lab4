@@ -16,6 +16,7 @@ library(datasets)
 library(tidyverse)
 library(fields)
 library(janitor)
+library(GGally)
 ```
 
 ## Problem 1
@@ -90,5 +91,5 @@ ggplot(wss_table, aes(x = k, y = wSS)) +
        title = "Elbow Plot")
 ```
 
-
+What we can get based on the plot is the slope changes greatly at the third point. At the top we see a number line plotting each point in the dataset, and below we see an elbow chart showing the SSE after running k-means clustering for k going from 1 to 10. We see a pretty clear elbow at k = 3, indicating that 3 is the best number of clusters.
 
